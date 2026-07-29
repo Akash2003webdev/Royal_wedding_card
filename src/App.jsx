@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import FloatingButtons from './components/FloatingButtons.jsx';
+import CartDrawer from './components/CartDrawer.jsx';
 import Loader from './components/Loader.jsx';
 import PageTransition from './layouts/PageTransition.jsx';
 import AppRoutes from './routes/AppRoutes.jsx';
@@ -33,6 +34,7 @@ export default function App() {
       </main>
       {!isAdminRoute && <Footer />}
       {!isAdminRoute && <FloatingButtons />}
+      {!isAdminRoute && <CartDrawer />}
     </div>
   );
 }

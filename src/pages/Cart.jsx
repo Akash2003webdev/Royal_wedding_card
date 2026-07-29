@@ -5,6 +5,8 @@ import toast from 'react-hot-toast';
 import { useCart } from '../context/CartContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { createOrder } from '../supabase/queries.js';
+import { WHATSAPP_NUMBER } from '../constants/business.js';
+import { buildWhatsappCartMessage } from '../utils/whatsapp.js';
 
 export default function Cart() {
   const { items, updateQty, removeFromCart, total, clearCart } = useCart();
@@ -35,6 +37,15 @@ export default function Cart() {
         customerPhone: customerPhone.trim(),
       });
       toast.success('Order placed! We will contact you shortly.');
+
+      const waMessage = buildWhatsappCartMessage({
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+        items,
+        total,
+      });
+      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(waMessage)}`, '_blank');
+
       clearCart();
       navigate('/account');
     } catch (err) {

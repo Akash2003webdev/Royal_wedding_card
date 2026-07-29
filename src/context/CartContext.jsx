@@ -9,6 +9,7 @@ export function CartProvider({ children }) {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!user) {
@@ -49,6 +50,7 @@ export function CartProvider({ children }) {
     try {
       await upsertCartItem(user.id, product.id, newQty);
       toast.success(`${product.name} added to cart`);
+      setDrawerOpen(true);
     } catch (err) {
       refresh();
       toast.error(err.message || 'Could not add to cart');
@@ -96,7 +98,10 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ items, loading, addToCart, removeFromCart, updateQty, clearCart, total, count }}
+      value={{
+        items, loading, addToCart, removeFromCart, updateQty, clearCart, total, count,
+        drawerOpen, openDrawer: () => setDrawerOpen(true), closeDrawer: () => setDrawerOpen(false),
+      }}
     >
       {children}
     </CartContext.Provider>

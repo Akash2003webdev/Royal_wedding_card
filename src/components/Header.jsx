@@ -16,7 +16,7 @@ export default function Header() {
   const headerRef = useRef(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [allCategories, setAllCategories] = useState([]);
-  const { count } = useCart();
+  const { count, openDrawer } = useCart();
   const { items: wishlistItems } = useWishlist();
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -142,14 +142,19 @@ export default function Header() {
                 </span>
               )}
             </Link>
-            <Link to="/cart" aria-label="Cart" className="relative hover:text-[#8B1E3F] transition-colors">
+            <button
+              type="button"
+              onClick={openDrawer}
+              aria-label="Cart"
+              className="relative hover:text-[#8B1E3F] transition-colors"
+            >
               <ShoppingBag size={20} />
               {count > 0 && (
                 <span className="absolute -top-2 -right-2 bg-[#8B1E3F] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
                   {count}
                 </span>
               )}
-            </Link>
+            </button>
             <Link to="/account" aria-label="Account" className="hidden md:inline-flex hover:text-[#8B1E3F] transition-colors">
               <User size={20} />
             </Link>

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, Star } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Plus, Pencil, Trash2, Star, Camera, Image as ImageIcon, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   adminGetProducts, adminGetCategories, createProduct, updateProduct, deleteProduct,
@@ -22,6 +22,8 @@ export default function AdminProducts() {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [galleryFiles, setGalleryFiles] = useState([]); // pending File objects for a new product
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
 
   const load = () => {
     setLoading(true);
@@ -243,15 +245,69 @@ export default function AdminProducts() {
 
             <div>
               <span className="block text-sm font-medium mb-2">Add Gallery Images</span>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => setGalleryFiles(Array.from(e.target.files || []))}
-                className={inputCls}
-              />
+              <div className="rounded-xl border-2 border-dashed border-neutral-300 dark:border-neutral-700 p-4">
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => cameraInputRef.current?.click()}
+                    className="flex flex-col items-center justify-center gap-2 flex-1 py-3 rounded-lg text-neutral-400 hover:text-secondary hover:bg-secondary/5 transition-colors"
+                  >
+                    <Camera size={20} />
+                    <span className="text-xs">Camera</span>
+                  </button>
+                  <div className="w-px h-10 bg-neutral-300 dark:bg-neutral-700" />
+                  <button
+                    type="button"
+                    onClick={() => galleryInputRef.current?.click()}
+                    className="flex flex-col items-center justify-center gap-2 flex-1 py-3 rounded-lg text-neutral-400 hover:text-secondary hover:bg-secondary/5 transition-colors"
+                  >
+                    <ImageIcon size={20} />
+                    <span className="text-xs">Gallery</span>
+                  </button>
+                </div>
+                {/* capture="environment" opens the rear camera directly */}
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    setGalleryFiles((prev) => [...prev, ...files]);
+                    e.target.value = '';
+                  }}
+                />
+                {/* no capture attr -> normal photo library, allows multi-select */}
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    setGalleryFiles((prev) => [...prev, ...files]);
+                    e.target.value = '';
+                  }}
+                />
+              </div>
               {galleryFiles.length > 0 && (
-                <p className="text-xs text-neutral-400 mt-1">{galleryFiles.length} file(s) selected — will upload on save</p>
+                <div className="flex gap-2 flex-wrap mt-2">
+                  {galleryFiles.map((f, i) => (
+                    <div key={`${f.name}-${i}`} className="relative w-16 h-16 rounded-lg overflow-hidden border border-black/10 dark:border-white/10 shrink-0">
+                      <img src={URL.createObjectURL(f)} alt="" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setGalleryFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center"
+                        aria-label="Remove"
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 
