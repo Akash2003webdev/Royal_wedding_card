@@ -208,6 +208,7 @@ export async function createOrder(userId, items, total, contact = {}) {
       status: 'pending',
       customer_name: contact.customerName || null,
       customer_phone: contact.customerPhone || null,
+      customer_address: contact.customerAddress || null,
     })
     .select()
     .single();
@@ -227,8 +228,8 @@ export async function createOrder(userId, items, total, contact = {}) {
 // Logs a single-product order when someone taps "Order via WhatsApp".
 // Works for guests too (userId can be null) — the click itself is the
 // intent to buy, so we record it without forcing a login first.
-export async function createWhatsappOrder(product, qty = 1, userId = null) {
-  return createOrder(userId, [{ id: product.id, qty, price: product.price }], Number(product.price) * qty);
+export async function createWhatsappOrder(product, qty = 1, userId = null, contact = {}) {
+  return createOrder(userId, [{ id: product.id, qty, price: product.price }], Number(product.price) * qty, contact);
 }
 
 // A shopper's own order history (RLS restricts this to auth.uid() = user_id).
@@ -311,9 +312,46 @@ export async function deleteImage(bucket, path) {
 // ============================================================
 
 export async function getUserRole(userId) {
-  const { data, error } = await supabase.from('users').select('role').eq('id', userId).single();
+  const { data, error } = await supabase.from('users').select('role').eq('id', userId).maybeSingle();
   if (error) throw error;
   return data?.role || 'user';
+}
+
+// Full profile (name, phone, avatar) for the logged-in user — used to
+// prefill checkout and to show "who's logged in" alongside orders.
+// Some accounts (created before the profile trigger existed, or hit
+// mid-signup) may not have a matching `users` row yet — maybeSingle()
+// avoids throwing on 0 rows, and we create the row on the spot instead.
+export async function getUserProfile(userId) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, full_name, phone, address, avatar_url, role')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  if (data) return data;
+
+  const { data: created, error: insertError } = await supabase
+    .from('users')
+    .insert({ id: userId })
+    .select('id, full_name, phone, address, avatar_url, role')
+    .single();
+  if (insertError) throw insertError;
+  return created;
+}
+
+export async function updateUserProfile(userId, { fullName, phone, address, avatarUrl } = {}) {
+  const patch = { id: userId };
+  if (fullName !== undefined) patch.full_name = fullName;
+  if (phone !== undefined) patch.phone = phone;
+  if (address !== undefined) patch.address = address;
+  if (avatarUrl !== undefined) patch.avatar_url = avatarUrl;
+  // upsert (not update) so this also works if the `users` row doesn't
+  // exist yet — update-with-no-matching-row would otherwise return 0
+  // rows and .single() would throw this same coercion error.
+  const { data, error } = await supabase.from('users').upsert(patch).select().single();
+  if (error) throw error;
+  return data;
 }
 
 // ============================================================
@@ -476,7 +514,7 @@ export async function adminGetOrders() {
   if (userIds.length) {
     const { data: profiles, error: profileError } = await supabase
       .from('users')
-      .select('id, full_name, phone')
+      .select('id, full_name, phone, avatar_url')
       .in('id', userIds);
     if (profileError) throw profileError;
     profilesById = Object.fromEntries((profiles || []).map((p) => [p.id, p]));

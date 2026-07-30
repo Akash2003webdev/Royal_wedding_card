@@ -1,13 +1,13 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../supabase/client.js';
 import { signOut as authSignOut } from '../supabase/auth.js';
-import { getUserRole } from '../supabase/queries.js';
+import { getUserProfile } from '../supabase/queries.js';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
-  const [role, setRole] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,19 +29,36 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  const refreshProfile = () => {
+    const userId = session?.user?.id;
+    if (!userId) {
+      setProfile(null);
+      return Promise.resolve(null);
+    }
+    return getUserProfile(userId)
+      .then((p) => {
+        setProfile(p);
+        return p;
+      })
+      .catch(() => {
+        setProfile(null);
+        return null;
+      });
+  };
+
   useEffect(() => {
     const userId = session?.user?.id;
     if (!userId) {
-      setRole(null);
+      setProfile(null);
       return;
     }
     let active = true;
-    getUserRole(userId)
-      .then((r) => {
-        if (active) setRole(r);
+    getUserProfile(userId)
+      .then((p) => {
+        if (active) setProfile(p);
       })
       .catch(() => {
-        if (active) setRole('user');
+        if (active) setProfile(null);
       });
     return () => {
       active = false;
@@ -51,7 +68,7 @@ export function AuthProvider({ children }) {
   const signOut = async () => {
     await authSignOut();
     setSession(null);
-    setRole(null);
+    setProfile(null);
   };
 
   return (
@@ -60,8 +77,10 @@ export function AuthProvider({ children }) {
         session,
         user: session?.user ?? null,
         isLoggedIn: !!session?.user,
-        role,
-        isAdmin: role === 'admin',
+        profile,
+        refreshProfile,
+        role: profile?.role || null,
+        isAdmin: profile?.role === 'admin',
         loading,
         signOut,
       }}

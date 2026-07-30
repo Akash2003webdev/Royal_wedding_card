@@ -56,6 +56,9 @@ export default function AdminOrders() {
                   <span className={`shrink-0 text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-1 rounded-full text-white ${STATUS_COLOR[o.status] || 'bg-neutral-400'}`}>
                     {o.status}
                   </span>
+                  {o.users?.avatar_url ? (
+                    <img src={o.users.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 hidden sm:block" />
+                  ) : null}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate text-sm sm:text-base">
                       {o.customer_name || o.users?.full_name || 'Guest'} · {o.customer_phone || o.users?.phone || '—'}
@@ -68,6 +71,34 @@ export default function AdminOrders() {
 
                 {isOpen && (
                   <div className="px-4 pb-4 border-t border-black/5 dark:border-white/10 pt-4">
+                    <div className="grid sm:grid-cols-2 gap-3 mb-4">
+                      <div className="rounded-xl bg-neutral-50 dark:bg-neutral-800 p-3">
+                        <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide mb-2">Account (logged in as)</p>
+                        {o.users ? (
+                          <div className="flex items-center gap-2">
+                            {o.users.avatar_url ? (
+                              <img src={o.users.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
+                            ) : (
+                              <div className="w-9 h-9 rounded-full bg-neutral-200 dark:bg-neutral-700 shrink-0" />
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">{o.users.full_name || '—'}</p>
+                              <p className="text-xs text-neutral-500">{o.users.phone || '—'}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-neutral-400">Guest (no account)</p>
+                        )}
+                      </div>
+                      <div className="rounded-xl bg-neutral-50 dark:bg-neutral-800 p-3">
+                        <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide mb-2">Order Contact (entered at checkout)</p>
+                        <p className="text-sm font-medium">{o.customer_name || '—'}</p>
+                        <p className="text-xs text-neutral-500">{o.customer_phone || '—'}</p>
+                        {o.customer_address && (
+                          <p className="text-xs text-neutral-500 mt-1">📍 {o.customer_address}</p>
+                        )}
+                      </div>
+                    </div>
                     <div className="space-y-2 mb-4">
                       {(o.order_items || []).map((item) => (
                         <div key={item.id} className="flex items-center justify-between text-sm">

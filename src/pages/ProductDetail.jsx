@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { createPortal } from 'react-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Star, MessageCircle, Minus, Plus, Truck, Ruler, FileText, Heart } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { gsap } from '../animations/gsap.js';
@@ -17,10 +18,13 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
   const [qty, setQty] = useState(1);
+  const [showOrderConfirm, setShowOrderConfirm] = useState(false);
+  const [placingOrder, setPlacingOrder] = useState(false);
   const imgRef = useRef(null);
   const { addToCart } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
-  const { user } = useAuth();
+  const { user, isLoggedIn, profile } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     let active = true;
@@ -81,6 +85,44 @@ export default function ProductDetail() {
       toast.error(err.message || 'Could not submit review');
     } finally {
       setSubmittingReview(false);
+    }
+  };
+
+  const handleWhatsappOrderClick = () => {
+    if (!isLoggedIn) {
+      navigate('/login', { state: { redirect: `/product/${id}` } });
+      return;
+    }
+    // Google sign-in doesn't provide a phone number, so some accounts
+    // reach this point with an incomplete profile — send them to fill
+    // it in on the Account page rather than failing silently.
+    if (!profile?.full_name || !profile?.phone || !profile?.address) {
+      navigate('/account', { state: { needsProfile: true, redirect: `/product/${id}` } });
+      return;
+    }
+    setShowOrderConfirm(true);
+  };
+
+  const handleConfirmWhatsappOrder = async () => {
+    setPlacingOrder(true);
+    try {
+      await createWhatsappOrder(product, qty, user?.id ?? null, {
+        customerName: profile.full_name,
+        customerPhone: profile.phone,
+        customerAddress: profile.address,
+      });
+      const waMessage = buildWhatsappOrderMessage(product, qty, {
+        account: { fullName: profile.full_name, phone: profile.phone, email: user.email },
+        customerName: profile.full_name,
+        customerPhone: profile.phone,
+        customerAddress: profile.address,
+      });
+      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(waMessage)}`, '_blank');
+      setShowOrderConfirm(false);
+    } catch (err) {
+      toast.error(err.message || 'Could not place order. Please try again.');
+    } finally {
+      setPlacingOrder(false);
     }
   };
 
@@ -170,19 +212,12 @@ export default function ProductDetail() {
               </button>
             </div>
 
-            <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildWhatsappOrderMessage(product, qty))}`}
-              target="_blank"
-              rel="noreferrer"
-              onClick={() =>
-                createWhatsappOrder(product, qty, user?.id ?? null).catch((err) =>
-                  console.error('Failed to record WhatsApp order:', err)
-                )
-              }
+            <button
+              onClick={handleWhatsappOrderClick}
               className="flex items-center justify-center gap-2 w-full bg-[#25D366] text-white py-4 rounded-2xl font-semibold shadow-lg hover:bg-[#20ba5a] hover:scale-[1.01] transition-all"
             >
               <MessageCircle size={20} /> Order via WhatsApp
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -277,6 +312,43 @@ export default function ProductDetail() {
           </form>
         </div>
       </section>
+
+      {showOrderConfirm && createPortal(
+        <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-black/50 p-4">
+          <div className="w-full sm:max-w-md bg-white dark:bg-neutral-900 rounded-3xl p-6 shadow-2xl">
+            <h2 className="font-heading font-bold text-xl mb-1 text-[#2B2118] dark:text-white">Confirm Your Order</h2>
+            <p className="text-sm text-neutral-500 mb-5">Please check the details below before placing your order.</p>
+
+            <div className="flex items-center justify-between text-sm mb-3">
+              <span className="truncate pr-2">{product.name} × {qty}</span>
+              <span className="text-neutral-500 shrink-0">₹{Number(product.price) * qty}</span>
+            </div>
+
+            <div className="border-t border-black/5 dark:border-white/10 pt-3 mb-4 space-y-1">
+              <p className="text-xs text-neutral-500">Contact: {profile?.full_name} · {profile?.phone}</p>
+              <p className="text-xs text-neutral-500">📍 {profile?.address}</p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowOrderConfirm(false)}
+                disabled={placingOrder}
+                className="flex-1 py-3 rounded-full font-semibold border border-neutral-300 dark:border-neutral-700 hover:bg-black/5 dark:hover:bg-white/5 transition-colors disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmWhatsappOrder}
+                disabled={placingOrder}
+                className="flex-1 py-3 rounded-full font-semibold bg-[#25D366] text-white hover:scale-[1.01] transition-transform disabled:opacity-60"
+              >
+                {placingOrder ? 'Placing...' : 'Confirm Order'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

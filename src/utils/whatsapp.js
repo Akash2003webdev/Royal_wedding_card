@@ -2,14 +2,27 @@
 // relevant field we have on the normalized product object.
 
 // Builds a WhatsApp message summarizing an entire cart checkout —
-// customer details, every item with full specs, and the order total.
-export function buildWhatsappCartMessage({ customerName, customerPhone, items, total }) {
+// who's logged in (account), who they entered at checkout (order contact,
+// which can differ — e.g. ordering for someone else), every item with
+// full specs, and the order total.
+export function buildWhatsappCartMessage({ account, customerName, customerPhone, customerAddress, items, total }) {
   const lines = [];
 
   lines.push('Hi! I just placed an order 🎉');
   lines.push('');
+
+  if (account && (account.fullName || account.phone || account.email)) {
+    lines.push('*Account (logged in as):*');
+    if (account.fullName) lines.push(`Name: ${account.fullName}`);
+    if (account.phone) lines.push(`Phone: ${account.phone}`);
+    if (account.email) lines.push(`Email: ${account.email}`);
+    lines.push('');
+  }
+
+  lines.push('*Order Contact:*');
   lines.push(`Name: ${customerName}`);
   lines.push(`Phone: ${customerPhone}`);
+  if (customerAddress) lines.push(`Delivery Address: ${customerAddress}`);
   lines.push('');
   lines.push('*Order Details:*');
   lines.push('');
@@ -36,11 +49,29 @@ export function buildWhatsappCartMessage({ customerName, customerPhone, items, t
   return lines.join('\n');
 }
 
-export function buildWhatsappOrderMessage(product, qty = 1) {
+export function buildWhatsappOrderMessage(product, qty = 1, contact = {}) {
+  const { account, customerName, customerPhone, customerAddress } = contact;
   const lines = [];
 
   lines.push('Hi! I\'d like to order this invitation 🎉');
   lines.push('');
+
+  if (account && (account.fullName || account.phone || account.email)) {
+    lines.push('*Account (logged in as):*');
+    if (account.fullName) lines.push(`Name: ${account.fullName}`);
+    if (account.phone) lines.push(`Phone: ${account.phone}`);
+    if (account.email) lines.push(`Email: ${account.email}`);
+    lines.push('');
+  }
+
+  if (customerName || customerPhone) {
+    lines.push('*Order Contact:*');
+    if (customerName) lines.push(`Name: ${customerName}`);
+    if (customerPhone) lines.push(`Phone: ${customerPhone}`);
+    if (customerAddress) lines.push(`Delivery Address: ${customerAddress}`);
+    lines.push('');
+  }
+
   lines.push(`*${product.name}*`);
 
   if (product.categoryName) lines.push(`Category: ${product.categoryName}`);

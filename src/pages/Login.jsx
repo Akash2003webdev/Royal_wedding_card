@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, User, Phone } from 'lucide-react';
 import { signInWithEmail, signUpWithEmail, signInWithGoogle } from '../supabase/auth.js';
+import { uploadImage, updateUserProfile } from '../supabase/queries.js';
+import AvatarPicker from '../components/AvatarPicker.jsx';
 
 export default function Login() {
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [avatarFile, setAvatarFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -21,11 +26,41 @@ export default function Login() {
       if (mode === 'signin') {
         await signInWithEmail(email, password);
         toast.success('Welcome back!');
+        navigate(redirectTo, { replace: true });
       } else {
-        await signUpWithEmail(email, password);
-        toast.success('Account created! You can now sign in.');
+        const { session, user } = await signUpWithEmail(email, password, {
+          fullName: fullName.trim(),
+          phone: phone.trim(),
+        });
+
+        // Only possible once a session exists (i.e. email confirmation is
+        // off) — storage + profile-update RLS both require auth.uid().
+        if (session && user) {
+          let avatarUrl;
+          if (avatarFile) {
+            try {
+              const { url } = await uploadImage('avatars', avatarFile, user.id);
+              avatarUrl = url;
+            } catch (avatarErr) {
+              console.error('Avatar upload failed:', avatarErr);
+            }
+          }
+          try {
+            await updateUserProfile(user.id, {
+              fullName: fullName.trim(),
+              phone: phone.trim(),
+              ...(avatarUrl ? { avatarUrl } : {}),
+            });
+          } catch (profileErr) {
+            console.error('Profile update failed:', profileErr);
+          }
+          toast.success('Account created!');
+          navigate(redirectTo, { replace: true });
+        } else {
+          toast.success('Account created! Please check your email to confirm, then sign in.');
+          setMode('signin');
+        }
       }
-      navigate(redirectTo, { replace: true });
     } catch (err) {
       toast.error(err.message || 'Something went wrong. Please try again.');
     } finally {
@@ -53,6 +88,32 @@ export default function Login() {
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4 mb-6">
+        {mode === 'signup' && (
+          <>
+            <AvatarPicker file={avatarFile} onChange={setAvatarFile} />
+            <div className="relative">
+              <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
+              <input
+                required
+                placeholder="Full name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 rounded-full border border-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-secondary"
+              />
+            </div>
+            <div className="relative">
+              <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
+              <input
+                required
+                type="tel"
+                placeholder="Phone number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 rounded-full border border-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-secondary"
+              />
+            </div>
+          </>
+        )}
         <div className="relative">
           <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
           <input
