@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { SlidersHorizontal, X } from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { gsap } from '../animations/gsap.js';
 import { revealBatch } from '../animations/scrollConfig.js';
 import ProductCard from '../components/ProductCard.jsx';
+import CategoryCard from '../components/CategoryCard.jsx';
 import { getCategories, getProducts } from '../supabase/queries.js';
 
 const SORTS = [
@@ -16,13 +17,22 @@ const SORTS = [
 export default function Collections() {
   const { slug } = useParams();
   const [activeCategory, setActiveCategory] = useState(slug || 'all');
+
+  // Collections and /collections/:slug share the same route element, so
+  // React Router doesn't remount this component when navigating from one
+  // category to another (e.g. clicking a different category card while
+  // already on a collections page) — only the URL param changes. Without
+  // this, activeCategory stays stuck on whichever category loaded first.
+  useEffect(() => {
+    setActiveCategory(slug || 'all');
+  }, [slug]);
+
   const [sort, setSort] = useState('newest');
   const [maxPrice, setMaxPrice] = useState(null);
   const [priceCeiling, setPriceCeiling] = useState(0);
   const [products, setProducts] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -58,26 +68,57 @@ export default function Collections() {
     return list;
   }, [activeCategory, sort, maxPrice, products]);
 
+  const activeCategoryData = allCategories.find((c) => c.slug === activeCategory);
+
+  // Landing view: no category picked yet — show category tiles (image +
+  // name), same style as the Home page "Featured Categories" section.
+  // Clicking a tile navigates to /collections/:slug which switches this
+  // component into the filtered-products view below.
+  if (activeCategory === 'all') {
+    return (
+      <div className="pt-28 md:pt-36 pb-24 max-w-7xl mx-auto px-4 sm:px-6 md:px-8 text-[#2B2118]">
+        <div className="mb-10 text-center md:text-left">
+          <h1 className="text-3xl md:text-4xl font-heading font-bold mb-2">Collections</h1>
+          <p className="text-neutral-600 text-sm md:text-base max-w-xl">
+            Pick a category to see its designs — every collection curated with royal detail and handcrafted elegance.
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-28 text-neutral-500 font-medium">Loading categories...</div>
+        ) : allCategories.length === 0 ? (
+          <div className="text-center py-24 bg-[#fffaf5] border border-black/5 rounded-3xl p-8 text-neutral-600">
+            <p className="font-semibold text-lg mb-1 text-[#2B2118]">No categories yet</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {allCategories.map((c) => (
+              <CategoryCard key={c.slug} category={c} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Category view: a specific category was picked — show its products
+  // with price filter + sort, and other categories to switch between.
   return (
     <div className="pt-28 md:pt-36 pb-24 max-w-7xl mx-auto px-4 sm:px-6 md:px-8 text-[#2B2118]">
       {/* Page Header */}
-      <div className="mb-8 text-center md:text-left">
-        <h1 className="text-3xl md:text-4xl font-heading font-bold mb-2">Collections</h1>
-        <p className="text-neutral-600 text-sm md:text-base max-w-xl">
-          Browse every invitation category, curated with royal detail and handcrafted elegance.
-        </p>
-      </div>
-
-      {/* Mobile Filter Toggle Bar */}
-      <div className="flex lg:hidden items-center justify-between gap-3 mb-6 bg-[#fffaf5] border border-black/10 rounded-2xl p-4 shadow-sm">
-        <button
-          onClick={() => setMobileFilterOpen(true)}
-          className="flex items-center gap-2 text-sm font-semibold text-[#8B1E3F]"
+      <div className="mb-8">
+        <Link
+          to="/collections"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#8B1E3F] mb-3 hover:underline"
         >
-          <SlidersHorizontal size={18} />
-          Filters & Categories
-        </button>
-        <span className="text-xs text-neutral-500 font-medium">{filtered.length} designs found</span>
+          <ArrowLeft size={16} /> All Categories
+        </Link>
+        <h1 className="text-3xl md:text-4xl font-heading font-bold mb-2">
+          {activeCategoryData?.name || 'Collections'}
+        </h1>
+        {activeCategoryData?.description && (
+          <p className="text-neutral-600 text-sm md:text-base max-w-xl">{activeCategoryData.description}</p>
+        )}
       </div>
 
       <div className="grid lg:grid-cols-[280px_1fr] gap-8 items-start">
@@ -86,16 +127,12 @@ export default function Collections() {
           <div>
             <h3 className="font-semibold text-base mb-4 text-[#2B2118] border-b border-black/5 pb-2">Categories</h3>
             <div className="flex flex-col gap-1.5 text-sm">
-              <button
-                onClick={() => setActiveCategory('all')}
-                className={`text-left px-4 py-2.5 rounded-xl transition-all font-medium ${
-                  activeCategory === 'all'
-                    ? 'bg-[#8B1E3F] text-white shadow-md'
-                    : 'hover:bg-[#FFF6EA] text-neutral-700'
-                }`}
+              <Link
+                to="/collections"
+                className="text-left px-4 py-2.5 rounded-xl transition-all font-medium hover:bg-[#FFF6EA] text-neutral-700"
               >
-                All Categories
-              </button>
+                ← All Categories
+              </Link>
               {allCategories.map((c) => (
                 <button
                   key={c.slug}
@@ -130,79 +167,6 @@ export default function Collections() {
             </div>
           </div>
         </aside>
-
-        {/* Mobile Slide-over Drawer Filters (z-index increased and padding fixed) */}
-        {mobileFilterOpen && (
-          <div className="fixed inset-0 z-[100] lg:hidden flex justify-end bg-black/40 backdrop-blur-sm animate-fade-in">
-            <div className="w-full max-w-xs bg-[#fffaf5] h-full shadow-2xl p-6 pt-24 flex flex-col justify-between overflow-y-auto">
-              <div>
-                <div className="flex items-center justify-between mb-6 border-b border-black/10 pb-4">
-                  <h3 className="font-bold text-lg text-[#2B2118]">Filters</h3>
-                  <button
-                    onClick={() => setMobileFilterOpen(false)}
-                    className="p-2 rounded-full hover:bg-black/5 text-neutral-700"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-semibold text-sm mb-3 text-[#2B2118]">Categories</h4>
-                    <div className="flex flex-col gap-2 text-sm">
-                      <button
-                        onClick={() => {
-                          setActiveCategory('all');
-                          setMobileFilterOpen(false);
-                        }}
-                        className={`text-left px-4 py-2.5 rounded-xl font-medium transition-all ${
-                          activeCategory === 'all' ? 'bg-[#8B1E3F] text-white' : 'bg-white hover:bg-[#FFF6EA]'
-                        }`}
-                      >
-                        All Categories
-                      </button>
-                      {allCategories.map((c) => (
-                        <button
-                          key={c.slug}
-                          onClick={() => {
-                            setActiveCategory(c.slug);
-                            setMobileFilterOpen(false);
-                          }}
-                          className={`text-left px-4 py-2.5 rounded-xl font-medium transition-all ${
-                            activeCategory === c.slug ? 'bg-[#8B1E3F] text-white' : 'bg-white hover:bg-[#FFF6EA]'
-                          }`}
-                        >
-                          {c.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-sm mb-3 text-[#2B2118]">
-                      Max Price: <span className="text-[#8B1E3F]">₹{maxPrice ?? 0}</span>
-                    </h4>
-                    <input
-                      type="range"
-                      min={0}
-                      max={priceCeiling || 100}
-                      value={maxPrice ?? 0}
-                      onChange={(e) => setMaxPrice(Number(e.target.value))}
-                      className="w-full accent-[#8B1E3F] cursor-pointer"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setMobileFilterOpen(false)}
-                className="w-full mt-6 py-3 rounded-xl bg-[#8B1E3F] text-white font-semibold shadow-lg"
-              >
-                Apply Filters ({filtered.length} Results)
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Product Grid Area */}
         <div>
@@ -243,7 +207,7 @@ export default function Collections() {
           ) : filtered.length === 0 ? (
             <div className="text-center py-24 bg-[#fffaf5] border border-black/5 rounded-3xl p-8 text-neutral-600">
               <p className="font-semibold text-lg mb-1 text-[#2B2118]">No designs match your filters</p>
-              <p className="text-sm text-neutral-500">Try widening your price range or resetting category filters.</p>
+              <p className="text-sm text-neutral-500">Try widening your price range or picking another category.</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">

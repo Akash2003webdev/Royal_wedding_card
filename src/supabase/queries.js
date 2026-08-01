@@ -38,6 +38,7 @@ function normalizeProduct(row) {
     ratingCount: row.rating_count,
     image: images[0]?.url,
     images: images.map((img) => img.url),
+    imageRecords: images.map((img) => ({ id: img.id, url: img.url })),
     reviews: row.reviews,
   };
 }

@@ -3,7 +3,7 @@ import { Plus, Pencil, Trash2, Star, Camera, Image as ImageIcon, X } from 'lucid
 import toast from 'react-hot-toast';
 import {
   adminGetProducts, adminGetCategories, createProduct, updateProduct, deleteProduct,
-  addProductImage, uploadImage,
+  addProductImage, deleteProductImage, uploadImage,
 } from '../supabase/queries.js';
 import Modal from './Modal.jsx';
 import ImageUploader from './ImageUploader.jsx';
@@ -22,6 +22,7 @@ export default function AdminProducts() {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [galleryFiles, setGalleryFiles] = useState([]); // pending File objects for a new product
+  const [removingImageId, setRemovingImageId] = useState(null);
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
 
@@ -58,7 +59,7 @@ export default function AdminProducts() {
       delivery_days: p.deliveryDays ?? 5,
       stock: p.stock ?? 100,
       is_active: true,
-      images: p.images || [],
+      images: p.imageRecords || [],
       _productId: p.id,
     });
     setGalleryFiles([]);
@@ -68,9 +69,17 @@ export default function AdminProducts() {
     e.preventDefault();
     setSaving(true);
     try {
+      // Slug is optional in the form now — auto-generate it from the
+      // name so the save never fails on a missing/blank slug.
+      const slug = (editing.slug || '').trim() || editing.name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+
       const payload = {
         name: editing.name,
-        slug: editing.slug,
+        slug,
         category_id: editing.category_id || null,
         description: editing.description || null,
         price: Number(editing.price),
@@ -105,6 +114,20 @@ export default function AdminProducts() {
       toast.error(err.message || 'Save failed');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRemoveExistingImage = async (imageId) => {
+    if (!confirm('Remove this image?')) return;
+    setRemovingImageId(imageId);
+    try {
+      await deleteProductImage(imageId);
+      setEditing((s) => ({ ...s, images: s.images.filter((img) => img.id !== imageId) }));
+      toast.success('Image removed');
+    } catch (err) {
+      toast.error(err.message || 'Could not remove image');
+    } finally {
+      setRemovingImageId(null);
     }
   };
 
@@ -234,9 +257,18 @@ export default function AdminProducts() {
               <div>
                 <span className="block text-sm font-medium mb-2">Existing Images</span>
                 <div className="flex gap-2 flex-wrap">
-                  {editing.images.map((url, i) => (
-                    <div key={url} className="relative w-20 h-24 rounded-lg overflow-hidden border border-black/10 dark:border-white/10">
-                      <img src={url} alt="" className="w-full h-full object-cover" />
+                  {editing.images.map((img) => (
+                    <div key={img.id} className="relative w-20 h-24 rounded-lg overflow-hidden border border-black/10 dark:border-white/10">
+                      <img src={img.url} alt="" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveExistingImage(img.id)}
+                        disabled={removingImageId === img.id}
+                        aria-label="Remove image"
+                        className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-600 disabled:opacity-60"
+                      >
+                        <X size={12} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -312,11 +344,11 @@ export default function AdminProducts() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Name">
+              <Field label="Name" required>
                 <input required value={editing.name} onChange={(e) => setEditing((s) => ({ ...s, name: e.target.value }))} className={inputCls} />
               </Field>
               <Field label="Slug">
-                <input required value={editing.slug} onChange={(e) => setEditing((s) => ({ ...s, slug: e.target.value }))} className={inputCls} />
+                <input value={editing.slug} onChange={(e) => setEditing((s) => ({ ...s, slug: e.target.value }))} className={inputCls} placeholder="auto-generated from name if left blank" />
               </Field>
             </div>
 
@@ -325,9 +357,9 @@ export default function AdminProducts() {
             </Field>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Category">
-                <select value={editing.category_id} onChange={(e) => setEditing((s) => ({ ...s, category_id: e.target.value }))} className={inputCls}>
-                  <option value="">— None —</option>
+              <Field label="Category" required>
+                <select required value={editing.category_id} onChange={(e) => setEditing((s) => ({ ...s, category_id: e.target.value }))} className={inputCls}>
+                  <option value="" disabled>Select a category</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
@@ -344,7 +376,7 @@ export default function AdminProducts() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Field label="Price (₹)">
+              <Field label="Price (₹)" required>
                 <input required type="number" min="0" step="0.01" value={editing.price} onChange={(e) => setEditing((s) => ({ ...s, price: e.target.value }))} className={inputCls} />
               </Field>
               <Field label="Compare-at Price">

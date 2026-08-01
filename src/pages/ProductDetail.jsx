@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Star, MessageCircle, Minus, Plus, Truck, Ruler, FileText, Heart } from 'lucide-react';
+import { Star, MessageCircle, Minus, Plus, Truck, Ruler, FileText, Heart, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { gsap } from '../animations/gsap.js';
 import { revealBatch } from '../animations/scrollConfig.js';
@@ -18,6 +18,8 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
   const [qty, setQty] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showImageZoom, setShowImageZoom] = useState(false);
   const [showOrderConfirm, setShowOrderConfirm] = useState(false);
   const [placingOrder, setPlacingOrder] = useState(false);
   const imgRef = useRef(null);
@@ -35,6 +37,7 @@ export default function ProductDetail() {
       .then((data) => {
         if (!active) return;
         setProduct(data);
+        setSelectedImage(data?.images?.[0] || data?.image || null);
         
         // Fetch all products to guarantee related items display properly
         return getProducts();
@@ -139,12 +142,36 @@ export default function ProductDetail() {
       {/* Product Main Section */}
       <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-start">
         {/* Image Preview with Zoom - Height reduced to aspect-[4/3] or max-h */}
-        <div className="relative rounded-3xl overflow-hidden aspect-[4/3] max-h-[500px] w-full bg-[#fffaf5] border border-black/5 shadow-md cursor-zoom-in" onMouseEnter={zoomIn} onMouseLeave={zoomOut}>
-          <img ref={imgRef} src={product.image} alt={product.name} className="w-full h-full object-cover" />
-          {product.badge && (
-            <span className="absolute top-4 left-4 text-xs font-semibold px-3.5 py-1.5 rounded-full bg-[#8B1E3F] text-white shadow-lg">
-              {product.badge.replace('_', ' ').toUpperCase()}
-            </span>
+        <div>
+          <div
+            className="relative rounded-3xl overflow-hidden aspect-[4/3] max-h-[500px] w-full bg-[#fffaf5] border border-black/5 shadow-md cursor-zoom-in"
+            onMouseEnter={zoomIn}
+            onMouseLeave={zoomOut}
+            onClick={() => setShowImageZoom(true)}
+          >
+            <img ref={imgRef} src={selectedImage || product.image} alt={product.name} className="w-full h-full object-cover" />
+            {product.badge && (
+              <span className="absolute top-4 left-4 text-xs font-semibold px-3.5 py-1.5 rounded-full bg-[#8B1E3F] text-white shadow-lg">
+                {product.badge.replace('_', ' ').toUpperCase()}
+              </span>
+            )}
+          </div>
+
+          {/* Thumbnail strip — only shows when the product has more than one image */}
+          {product.images?.length > 1 && (
+            <div className="flex gap-3 mt-4 overflow-x-auto pb-1">
+              {product.images.map((img, i) => (
+                <button
+                  key={img + i}
+                  onClick={() => setSelectedImage(img)}
+                  className={`shrink-0 w-16 h-20 sm:w-20 sm:h-24 rounded-xl overflow-hidden border-2 transition-all ${
+                    selectedImage === img ? 'border-[#8B1E3F] shadow-md' : 'border-black/5 opacity-80 hover:opacity-100'
+                  }`}
+                >
+                  <img src={img} alt={`${product.name} ${i + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
@@ -346,6 +373,48 @@ export default function ProductDetail() {
               </button>
             </div>
           </div>
+        </div>,
+        document.body
+      )}
+
+      {showImageZoom && createPortal(
+        <div
+          className="fixed inset-0 z-[95] flex items-center justify-center bg-black/85 p-4"
+          onClick={() => setShowImageZoom(false)}
+        >
+          <button
+            onClick={() => setShowImageZoom(false)}
+            aria-label="Close"
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-colors"
+          >
+            <X size={22} />
+          </button>
+
+          <img
+            src={selectedImage || product.image}
+            alt={product.name}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-[85vh] object-contain rounded-2xl select-none"
+          />
+
+          {product.images?.length > 1 && (
+            <div
+              className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex gap-2 max-w-[90vw] overflow-x-auto px-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {product.images.map((img, i) => (
+                <button
+                  key={img + i}
+                  onClick={() => setSelectedImage(img)}
+                  className={`shrink-0 w-12 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                    (selectedImage || product.image) === img ? 'border-white' : 'border-white/30 opacity-70 hover:opacity-100'
+                  }`}
+                >
+                  <img src={img} alt={`${product.name} ${i + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>,
         document.body
       )}
