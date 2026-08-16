@@ -8,6 +8,7 @@ import CartDrawer from './components/CartDrawer.jsx';
 import Loader from './components/Loader.jsx';
 import PageTransition from './layouts/PageTransition.jsx';
 import AppRoutes from './routes/AppRoutes.jsx';
+import SEOManager from './components/SEOManager.jsx';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -26,6 +27,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <Toaster position="top-center" />
+      <SEOManager />
       {!isAdminRoute && <Header />}
       <main className="flex-1">
         <PageTransition>

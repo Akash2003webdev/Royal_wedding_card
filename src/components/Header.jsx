@@ -89,17 +89,10 @@ export default function Header() {
             onTouchStart={startPress}
             onTouchEnd={cancelPress}
           >
-            <div className="flex items-center gap-1.5 text-[#8B1E3F]">
-              <svg width="20" height="14" viewBox="0 0 24 18" fill="currentColor" className="text-[#D4AF37]">
-                <path d="M12 1l3 5h6l-3.5 8.5h-11l-3.5-8.5h6l3-5z" fill="#D4AF37" />
-                <circle cx="3" cy="15" r="1.5" fill="#D4AF37" />
-                <circle cx="12" cy="16" r="1.5" fill="#D4AF37" />
-                <circle cx="21" cy="15" r="1.5" fill="#D4AF37" />
-              </svg>
+            <div className="flex items-center gap-2">
+              <img src="/logo-512.png" alt="Royal Wedding Cards logo" width="42" height="42" className="h-10 w-10 rounded-xl object-cover" />
+              <span className="text-xl md:text-2xl font-heading font-bold text-gradient-gold">Royal Wedding Cards</span>
             </div>
-            <span className="text-2xl md:text-3xl font-heading font-bold text-gradient-gold">
-              Royal Invitations
-            </span>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="h-[1px] w-6 bg-[#D4AF37]"></span>
               <span className="text-[8px] tracking-[0.2em] uppercase text-[#8B1E3F] font-semibold">Celebrate in style</span>

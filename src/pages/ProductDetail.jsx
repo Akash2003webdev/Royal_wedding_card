@@ -12,6 +12,7 @@ import ProductCard from '../components/ProductCard.jsx';
 import { getProductById, getRelatedProducts, getProducts, submitReview, createWhatsappOrder } from '../supabase/queries.js';
 import { WHATSAPP_NUMBER } from '../constants/business.js';
 import { buildWhatsappOrderMessage } from '../utils/whatsapp.js';
+import { useSEO, SITE_URL } from '../lib/seo.js';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -27,6 +28,12 @@ export default function ProductDetail() {
   const { toggleWishlist, isWishlisted } = useWishlist();
   const { user, isLoggedIn, profile } = useAuth();
   const navigate = useNavigate();
+  useSEO({
+    title: product ? `${product.name} | Royal Wedding Cards` : 'Wedding Card Design | Royal Wedding Cards',
+    description: product ? `${product.name} — ${product.description || 'premium customizable invitation design'}. View price and order from Royal Wedding Cards.` : 'View wedding invitation card design details.',
+    path: `/product/${id}`, type: 'product', image: product?.image,
+    structuredData: product ? { '@context': 'https://schema.org', '@type': 'Product', name: product.name, description: product.description, image: product.images?.length ? product.images : [product.image].filter(Boolean), sku: product.id, url: `${SITE_URL}/product/${product.id}`, brand: { '@type': 'Brand', name: 'Royal Wedding Cards' }, offers: { '@type': 'Offer', priceCurrency: 'INR', price: product.price, availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock', url: `${SITE_URL}/product/${product.id}` } } : undefined
+  });
 
   useEffect(() => {
     let active = true;

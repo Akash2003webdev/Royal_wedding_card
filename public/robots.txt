@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /login
+Disallow: /cart
+Disallow: /wishlist
+
+Sitemap: https://royalweddingcards.com/sitemap.xml

@@ -1,28 +1,30 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Home from '../pages/Home.jsx';
-import Collections from '../pages/Collections.jsx';
-import ProductDetail from '../pages/ProductDetail.jsx';
-import Gallery from '../pages/Gallery.jsx';
-import About from '../pages/About.jsx';
-import Contact from '../pages/Contact.jsx';
-import Cart from '../pages/Cart.jsx';
-import Wishlist from '../pages/Wishlist.jsx';
-import Login from '../pages/Login.jsx';
-import Account from '../pages/Account.jsx';
-import NotFound from '../pages/NotFound.jsx';
-import AdminLayout from '../admin/AdminLayout.jsx';
-import AdminDashboard from '../admin/AdminDashboard.jsx';
-import AdminProducts from '../admin/AdminProducts.jsx';
-import AdminCategories from '../admin/AdminCategories.jsx';
-import AdminBanners from '../admin/AdminBanners.jsx';
-import AdminGallery from '../admin/AdminGallery.jsx';
-import AdminOrders from '../admin/AdminOrders.jsx';
-import AdminReviews from '../admin/AdminReviews.jsx';
-import AdminUsers from '../admin/AdminUsers.jsx';
-import AdminSettings from '../admin/AdminSettings.jsx';
+const Home = lazy(() => import('../pages/Home.jsx'));
+const Collections = lazy(() => import('../pages/Collections.jsx'));
+const ProductDetail = lazy(() => import('../pages/ProductDetail.jsx'));
+const Gallery = lazy(() => import('../pages/Gallery.jsx'));
+const About = lazy(() => import('../pages/About.jsx'));
+const Contact = lazy(() => import('../pages/Contact.jsx'));
+const Cart = lazy(() => import('../pages/Cart.jsx'));
+const Wishlist = lazy(() => import('../pages/Wishlist.jsx'));
+const Login = lazy(() => import('../pages/Login.jsx'));
+const Account = lazy(() => import('../pages/Account.jsx'));
+const NotFound = lazy(() => import('../pages/NotFound.jsx'));
+const AdminLayout = lazy(() => import('../admin/AdminLayout.jsx'));
+const AdminDashboard = lazy(() => import('../admin/AdminDashboard.jsx'));
+const AdminProducts = lazy(() => import('../admin/AdminProducts.jsx'));
+const AdminCategories = lazy(() => import('../admin/AdminCategories.jsx'));
+const AdminBanners = lazy(() => import('../admin/AdminBanners.jsx'));
+const AdminGallery = lazy(() => import('../admin/AdminGallery.jsx'));
+const AdminOrders = lazy(() => import('../admin/AdminOrders.jsx'));
+const AdminReviews = lazy(() => import('../admin/AdminReviews.jsx'));
+const AdminUsers = lazy(() => import('../admin/AdminUsers.jsx'));
+const AdminSettings = lazy(() => import('../admin/AdminSettings.jsx'));
 
 export default function AppRoutes() {
   return (
+    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center text-neutral-500">Loading...</div>}>
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/collections" element={<Collections />} />
@@ -50,5 +52,6 @@ export default function AppRoutes() {
 
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </Suspense>
   );
 }
