@@ -13,7 +13,7 @@ export const ADDRESS_SHORT = 'Sattur, Tamil Nadu';
 
 export const HOURS_TODAY = 'Open · Closes 10 pm';
 
-export const WEBSITE = 'royalweddingcards.com';
+export const WEBSITE = 'royalcardsindia.com';
 export const PLUS_CODE = '9W58+7Q Saathur, Tamil Nadu';
 
 export const GOOGLE_MAPS_URL =

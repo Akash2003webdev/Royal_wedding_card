@@ -1,5 +1,5 @@
 import { writeFile, mkdir } from 'node:fs/promises';
-const site = 'https://royalweddingcards.com';
+const site = 'https://royalcardsindia.com';
 const routes = [['/', 'weekly', '1.0'], ['/collections', 'weekly', '0.9'], ['/gallery', 'weekly', '0.8'], ['/about', 'monthly', '0.7'], ['/contact', 'monthly', '0.7']];
 const supabaseUrl = process.env.VITE_SUPABASE_URL; const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 if (supabaseUrl && supabaseKey) { const headers = { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` }; try { const [categories, products] = await Promise.all([fetch(`${supabaseUrl}/rest/v1/categories?select=slug`, { headers }).then(r => r.ok ? r.json() : []), fetch(`${supabaseUrl}/rest/v1/products?select=id&is_active=eq.true`, { headers }).then(r => r.ok ? r.json() : [])]); for (const item of categories) if (item.slug) routes.push([`/collections/${item.slug}`, 'weekly', '0.8']); for (const item of products) if (item.id) routes.push([`/product/${item.id}`, 'weekly', '0.7']); } catch (error) { console.warn('Dynamic sitemap unavailable; generated public pages.', error.message); } }

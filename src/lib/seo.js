@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-export const SITE_URL = 'https://royalweddingcards.com';
+export const SITE_URL = 'https://royalcardsindia.com';
 const DEFAULT_IMAGE = `${SITE_URL}/og-image.jpg`;
 const INDEX = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 function meta(selector, attrs) { let node = document.head.querySelector(selector); if (!node) { node = document.createElement('meta'); document.head.appendChild(node); } Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value)); }

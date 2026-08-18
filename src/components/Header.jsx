@@ -89,10 +89,7 @@ export default function Header() {
             onTouchStart={startPress}
             onTouchEnd={cancelPress}
           >
-            <div className="flex items-center gap-2">
-              <img src="/logo-512.png" alt="Royal Wedding Cards logo" width="42" height="42" className="h-10 w-10 rounded-xl object-cover" />
-              <span className="text-xl md:text-2xl font-heading font-bold text-gradient-gold">Royal Wedding Cards</span>
-            </div>
+            <img src="/logo-header.png" alt="Royal Bags and Wedding Cards logo" width="230" height="92" className="h-14 w-auto max-w-[190px] object-contain md:h-16 md:max-w-[230px]" />
             <div className="flex items-center gap-2 mt-0.5">
               <span className="h-[1px] w-6 bg-[#D4AF37]"></span>
               <span className="text-[8px] tracking-[0.2em] uppercase text-[#8B1E3F] font-semibold">Celebrate in style</span>

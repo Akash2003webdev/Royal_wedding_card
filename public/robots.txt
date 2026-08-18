@@ -6,4 +6,4 @@ Disallow: /login
 Disallow: /cart
 Disallow: /wishlist
 
-Sitemap: https://royalweddingcards.com/sitemap.xml
+Sitemap: https://royalcardsindia.com/sitemap.xml
