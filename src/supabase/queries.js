@@ -12,6 +12,7 @@ function normalizeCategory(row) {
     slug: row.slug,
     description: row.description,
     icon: row.icon,
+    iconUrl: row.icon_url,
     image: row.image_url,
   };
 }
@@ -528,6 +529,13 @@ export async function updateOrderStatus(id, status) {
   const { data, error } = await supabase.from('orders').update({ status }).eq('id', id).select().single();
   if (error) throw error;
   return data;
+}
+
+export async function deleteOrder(id) {
+  const { error: itemsError } = await supabase.from('order_items').delete().eq('order_id', id);
+  if (itemsError) throw itemsError;
+  const { error } = await supabase.from('orders').delete().eq('id', id);
+  if (error) throw error;
 }
 
 // ============================================================

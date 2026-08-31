@@ -7,9 +7,7 @@ import Modal from './Modal.jsx';
 import ImageUploader from './ImageUploader.jsx';
 import { inputCls, Field } from './formClasses.jsx';
 
-const ICON_OPTIONS = ['Gem', 'Cake', 'Heart', 'Home', 'Baby', 'PartyPopper', 'Smartphone', 'Package', 'Sparkles'];
-
-const EMPTY = { name: '', slug: '', description: '', icon: 'Sparkles', image_url: '', sort_order: 0 };
+const EMPTY = { name: '', slug: '', description: '', icon_url: '', image_url: '', sort_order: 0 };
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState([]);
@@ -38,7 +36,7 @@ export default function AdminCategories() {
         name: editing.name,
         slug: editing.slug,
         description: editing.description || null,
-        icon: editing.icon,
+        icon_url: editing.icon_url || null,
         image_url: editing.image_url || null,
         sort_order: Number(editing.sort_order) || 0,
       };
@@ -86,7 +84,6 @@ export default function AdminCategories() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map((c) => {
-            const Icon = Icons[c.icon] || Icons.Sparkles;
             return (
               <div key={c.id} className="bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden border border-black/5 dark:border-white/10">
                 <div className="aspect-video bg-accent dark:bg-neutral-800 overflow-hidden">
@@ -94,7 +91,11 @@ export default function AdminCategories() {
                 </div>
                 <div className="p-4">
                   <div className="flex items-center gap-2 mb-1">
-                    <Icon size={16} className="text-secondary" />
+                    {c.icon_url ? (
+                      <img src={c.icon_url} alt="" className="w-4 h-4 rounded-full object-cover" />
+                    ) : (
+                      <Icons.Sparkles size={16} className="text-secondary" />
+                    )}
                     <h3 className="font-heading font-semibold">{c.name}</h3>
                   </div>
                   <p className="text-xs text-neutral-400 mb-3">/{c.slug}</p>
@@ -128,6 +129,13 @@ export default function AdminCategories() {
               value={editing.image_url}
               onChange={(url) => setEditing((s) => ({ ...s, image_url: url }))}
             />
+            <ImageUploader
+              bucket="products"
+              folder="category-icons"
+              label="Icon"
+              value={editing.icon_url}
+              onChange={(url) => setEditing((s) => ({ ...s, icon_url: url }))}
+            />
             <Field label="Name">
               <input
                 required
@@ -153,27 +161,14 @@ export default function AdminCategories() {
                 className={inputCls}
               />
             </Field>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Icon">
-                <select
-                  value={editing.icon}
-                  onChange={(e) => setEditing((s) => ({ ...s, icon: e.target.value }))}
-                  className={inputCls}
-                >
-                  {ICON_OPTIONS.map((i) => (
-                    <option key={i} value={i}>{i}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Sort Order">
-                <input
-                  type="number"
-                  value={editing.sort_order}
-                  onChange={(e) => setEditing((s) => ({ ...s, sort_order: e.target.value }))}
-                  className={inputCls}
-                />
-              </Field>
-            </div>
+            <Field label="Sort Order">
+              <input
+                type="number"
+                value={editing.sort_order}
+                onChange={(e) => setEditing((s) => ({ ...s, sort_order: e.target.value }))}
+                className={inputCls}
+              />
+            </Field>
             <button
               type="submit"
               disabled={saving}

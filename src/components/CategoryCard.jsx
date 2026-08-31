@@ -1,12 +1,11 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import * as Icons from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { gsap } from '../animations/gsap.js';
 
 export default function CategoryCard({ category }) {
   const imgRef = useRef(null);
   const borderRef = useRef(null);
-  const Icon = Icons[category.icon] || Icons.Sparkles;
 
   const onEnter = () => {
     gsap.to(imgRef.current, { scale: 1.1, duration: 0.7, ease: 'power3.out' });
@@ -37,7 +36,11 @@ export default function CategoryCard({ category }) {
         className="absolute inset-0 border-2 border-secondary rounded-2xl opacity-0 pointer-events-none"
       />
       <div className="absolute bottom-0 p-5 text-white">
-        <Icon size={26} className="text-secondary mb-2" />
+        {category.iconUrl ? (
+          <img src={category.iconUrl} alt="" className="w-7 h-7 rounded-full object-cover mb-2 border border-white/30" />
+        ) : (
+          <Sparkles size={26} className="text-secondary mb-2" />
+        )}
         <h3 className="text-xl font-heading font-semibold mb-1">{category.name}</h3>
         <p className="text-sm text-neutral-200">{category.description}</p>
       </div>

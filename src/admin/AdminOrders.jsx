@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { adminGetOrders, updateOrderStatus } from '../supabase/queries.js';
+import { adminGetOrders, updateOrderStatus, deleteOrder } from '../supabase/queries.js';
 
 const STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
 const STATUS_COLOR = {
@@ -34,6 +34,17 @@ export default function AdminOrders() {
       toast.success('Order status updated');
     } catch (err) {
       toast.error(err.message || 'Update failed');
+    }
+  };
+
+  const handleDelete = async (order) => {
+    if (!confirm(`Delete this order from ${order.customer_name || order.users?.full_name || 'Guest'}? This can't be undone.`)) return;
+    try {
+      await deleteOrder(order.id);
+      setOrders((prev) => prev.filter((o) => o.id !== order.id));
+      toast.success('Order deleted');
+    } catch (err) {
+      toast.error(err.message || 'Delete failed');
     }
   };
 
@@ -107,18 +118,27 @@ export default function AdminOrders() {
                         </div>
                       ))}
                     </div>
-                    <label className="block">
-                      <span className="block text-xs font-medium mb-1.5 text-neutral-500">Update Status</span>
-                      <select
-                        value={o.status}
-                        onChange={(e) => handleStatusChange(o, e.target.value)}
-                        className="px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 text-sm"
+                    <div className="flex items-end justify-between gap-3 flex-wrap">
+                      <label className="block">
+                        <span className="block text-xs font-medium mb-1.5 text-neutral-500">Update Status</span>
+                        <select
+                          value={o.status}
+                          onChange={(e) => handleStatusChange(o, e.target.value)}
+                          className="px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 text-sm"
+                        >
+                          {STATUSES.map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <button
+                        onClick={() => handleDelete(o)}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
                       >
-                        {STATUSES.map((s) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
-                    </label>
+                        <Trash2 size={16} />
+                        Delete Order
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
