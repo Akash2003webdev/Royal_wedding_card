@@ -39,7 +39,7 @@ export default function ProductDetail() {
   const [showOrderConfirm, setShowOrderConfirm] = useState(false);
   const [placingOrder, setPlacingOrder] = useState(false);
   const imgRef = useRef(null);
-  const { addToCart, items, updateQty, removeFromCart } = useCart();
+  const { addToCart, items, updateQty, removeFromCart, openDrawer } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
   const { user, isLoggedIn, profile } = useAuth();
   const navigate = useNavigate();
@@ -351,9 +351,13 @@ export default function ProductDetail() {
               </div>
               <button
                 onClick={async () => {
+                  if (!isLoggedIn) {
+                    navigate("/login", { state: { redirect: `/product/${id}` } });
+                    return;
+                  }
                   const alreadyInCart = items.find((i) => i.id === product.id);
                   if (!alreadyInCart) await addToCart(product, 1);
-                  navigate("/cart");
+                  openDrawer();
                 }}
                 className="flex-1 bg-[#8B1E3F] text-white py-4 rounded-2xl font-semibold shadow-lg hover:bg-[#73152F] hover:scale-[1.01] transition-all"
               >
