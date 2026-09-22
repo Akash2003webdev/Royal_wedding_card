@@ -8,7 +8,8 @@ import { revealBatch, revealUp, animateCounter } from '../animations/scrollConfi
 import CategoryCard from '../components/CategoryCard.jsx';
 import ProductCard from '../components/ProductCard.jsx';
 import { getFeaturedCategories, getFeaturedProducts, getActiveBanners, getGallery } from '../supabase/queries.js';
-import { PHONE_TEL, WHATSAPP_NUMBER, ADDRESS_SHORT, ADDRESS_LINE, PHONE_DISPLAY } from '../constants/business.js';
+import { PHONE_TEL, WHATSAPP_NUMBER } from '../constants/business.js';
+import { useSettings } from '../context/SettingsContext.jsx';
 
 const STATS = [
   { label: 'Years of Craft', value: 20, suffix: '+' },
@@ -31,6 +32,7 @@ const FAQS = [
 ];
 
 export default function Home() {
+  const { store, homepage } = useSettings();
   const heroRef = useRef(null);
   const cardsRef = useRef([]);
   const gridRef = useRef(null);
@@ -129,17 +131,12 @@ export default function Home() {
 
             {/* Heading */}
             <h1 className="hero-title opacity-0 text-3xl sm:text-4xl lg:text-5xl font-bold font-heading leading-tight text-[#2B2118]">
-              Every Celebration Begins
-              <span className="block text-[#8B1E3F] mt-1">
-                With A Beautiful Invitation
-              </span>
+              {homepage.heroTitle}
             </h1>
 
             {/* Description */}
             <p className="hero-sub opacity-0 mt-5 text-base sm:text-lg leading-7 sm:leading-8 text-[#4A3B32] font-medium max-w-lg">
-              Handcrafted wedding, birthday, engagement and
-              housewarming invitations — designed with royal
-              elegance, delivered anywhere in India.
+              {homepage.heroSubtitle}
             </p>
 
             {/* Buttons */}
@@ -305,8 +302,8 @@ export default function Home() {
           <p className="text-neutral-600 dark:text-neutral-400 mb-6">
             Talk to our design team about custom wording, colors, and premium finishes.
           </p>
-          <div className="flex items-center gap-2 text-sm mb-2"><MapPin size={16} className="text-primary shrink-0" /> {ADDRESS_SHORT}</div>
-          <div className="flex items-center gap-2 text-sm mb-6"><Phone size={16} className="text-primary" /> {PHONE_DISPLAY}</div>
+          <div className="flex items-center gap-2 text-sm mb-2"><MapPin size={16} className="text-primary shrink-0" /> {store.address}</div>
+          <div className="flex items-center gap-2 text-sm mb-6"><Phone size={16} className="text-primary" /> {store.phone}</div>
           <Link to="/contact" className="inline-block bg-primary text-white px-6 py-3 rounded-full font-semibold hover:scale-105 transition-transform">
             Contact Us
           </Link>
@@ -316,7 +313,7 @@ export default function Home() {
             title="map"
             className="w-full h-full border-0"
             loading="lazy"
-            src={`https://www.google.com/maps?q=${encodeURIComponent(ADDRESS_LINE)}&output=embed`}
+            src={`https://www.google.com/maps?q=${encodeURIComponent(store.address)}&output=embed`}
           />
         </div>
       </section>

@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Youtube, MapPin, Phone, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getCategories } from '../supabase/queries.js';
-import { ADDRESS_SHORT, PHONE_DISPLAY } from '../constants/business.js';
+import { useSettings } from '../context/SettingsContext.jsx';
 
 export default function Footer() {
   const [allCategories, setAllCategories] = useState([]);
+  const { store } = useSettings();
 
   useEffect(() => {
     let active = true;
@@ -30,7 +31,7 @@ export default function Footer() {
     <footer className="bg-bgDark text-neutral-200 pt-16 pb-28 lg:pb-10 mt-24">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-10">
         <div>
-          <h3 className="text-2xl font-heading text-gradient-gold mb-3"> Royal Wedding Cards</h3>
+          <h3 className="text-2xl font-heading text-gradient-gold mb-3"> {store.storeName}</h3>
           <p className="text-sm text-neutral-400 mb-4">
             Every Celebration Begins With A Beautiful Invitation.
           </p>
@@ -66,14 +67,14 @@ export default function Footer() {
           <h4 className="font-semibold mb-3 text-secondary">Stay Updated</h4>
           {/* <p className="text-sm text-neutral-400 mb-3">Get 10% off your first royal order.</p> */}
           <ul className="space-y-2 text-sm text-neutral-400">
-            <li className="flex items-center gap-2"><MapPin size={14} /> {ADDRESS_SHORT}</li>
-            <li className="flex items-center gap-2"><Phone size={14} /> {PHONE_DISPLAY}</li>
-            <li className="flex items-center gap-2"><Mail size={14} /> info@h1enterprises.in</li>
+            <li className="flex items-center gap-2"><MapPin size={14} /> {store.address}</li>
+            <li className="flex items-center gap-2"><Phone size={14} /> {store.phone}</li>
+            <li className="flex items-center gap-2"><Mail size={14} /> {store.email}</li>
           </ul>
         </div>
       </div>
       <p className="text-center text-xs text-neutral-500 mt-12">
-        © {new Date().getFullYear()} Royal Wedding Cards. All rights reserved.
+        © {new Date().getFullYear()} {store.storeName}. All rights reserved.
       </p>
     </footer>
   );

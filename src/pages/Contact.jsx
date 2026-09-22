@@ -1,10 +1,12 @@
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { Phone, Mail, MapPin, Clock } from 'lucide-react';
-import { ADDRESS_LINE, PHONE_DISPLAY, HOURS_TODAY } from '../constants/business.js';
+import { HOURS_TODAY } from '../constants/business.js';
+import { useSettings } from '../context/SettingsContext.jsx';
 
 export default function Contact() {
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm();
+  const { store } = useSettings();
 
   const onSubmit = async (data) => {
     await new Promise((r) => setTimeout(r, 800));
@@ -57,9 +59,9 @@ export default function Contact() {
 
         <div>
           <div className="space-y-4 mb-8">
-            <div className="flex items-center gap-3"><MapPin className="text-primary shrink-0" size={20} /> {ADDRESS_LINE}</div>
-            <div className="flex items-center gap-3"><Phone className="text-primary shrink-0" size={20} /> {PHONE_DISPLAY}</div>
-            <div className="flex items-center gap-3"><Mail className="text-primary shrink-0" size={20} /> info@h1enterprises.in</div>
+            <div className="flex items-center gap-3"><MapPin className="text-primary shrink-0" size={20} /> {store.address}</div>
+            <div className="flex items-center gap-3"><Phone className="text-primary shrink-0" size={20} /> {store.phone}</div>
+            <div className="flex items-center gap-3"><Mail className="text-primary shrink-0" size={20} /> {store.email}</div>
             <div className="flex items-center gap-3"><Clock className="text-primary shrink-0" size={20} /> {HOURS_TODAY}</div>
           </div>
           <div className="rounded-3xl overflow-hidden h-72">
@@ -67,7 +69,7 @@ export default function Contact() {
               title="map"
               className="w-full h-full border-0"
               loading="lazy"
-              src={`https://www.google.com/maps?q=${encodeURIComponent(ADDRESS_LINE)}&output=embed`}
+              src={`https://www.google.com/maps?q=${encodeURIComponent(store.address)}&output=embed`}
             />
           </div>
         </div>
