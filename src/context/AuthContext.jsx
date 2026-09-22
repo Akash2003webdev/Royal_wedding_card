@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../supabase/client.js';
-import { signOut as authSignOut } from '../supabase/auth.js';
-import { getUserProfile } from '../supabase/queries.js';
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { supabase } from "../supabase/client.js";
+import { signOut as authSignOut } from "../supabase/auth.js";
+import { getUserProfile } from "../supabase/queries.js";
 
 const AuthContext = createContext(null);
 
@@ -9,6 +10,11 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
+  // Set true only on an actual sign-in event (email or Google), never on a
+  // page refresh that just restores an existing session.
+  const justSignedInRef = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -19,9 +25,12 @@ export function AuthProvider({ children }) {
       setLoading(false);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-    });
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (event, newSession) => {
+        if (event === "SIGNED_IN") justSignedInRef.current = true;
+        setSession(newSession);
+      },
+    );
 
     return () => {
       active = false;
@@ -55,7 +64,14 @@ export function AuthProvider({ children }) {
     let active = true;
     getUserProfile(userId)
       .then((p) => {
-        if (active) setProfile(p);
+        if (!active) return;
+        setProfile(p);
+        if (justSignedInRef.current) {
+          justSignedInRef.current = false;
+          if (p?.role === "admin" && !location.pathname.startsWith("/admin")) {
+            navigate("/admin", { replace: true });
+          }
+        }
       })
       .catch(() => {
         if (active) setProfile(null);
@@ -80,7 +96,7 @@ export function AuthProvider({ children }) {
         profile,
         refreshProfile,
         role: profile?.role || null,
-        isAdmin: profile?.role === 'admin',
+        isAdmin: profile?.role === "admin",
         loading,
         signOut,
       }}

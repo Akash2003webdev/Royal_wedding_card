@@ -1,9 +1,10 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Star, MessageCircle } from 'lucide-react';
+import { Heart, Star, MessageCircle, Plus } from 'lucide-react';
 import { gsap } from '../animations/gsap.js';
 import { useWishlist } from '../context/WishlistContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useCart } from '../context/CartContext.jsx';
 import { WHATSAPP_NUMBER } from '../constants/business.js';
 import { createWhatsappOrder } from '../supabase/queries.js';
 import { buildWhatsappOrderMessage } from '../utils/whatsapp.js';
@@ -20,7 +21,9 @@ export default function ProductCard({ product }) {
   const cardRef = useRef(null);
   const { toggleWishlist, isWishlisted } = useWishlist();
   const { user } = useAuth();
+  const { addToCart, items } = useCart();
   const wished = isWishlisted(product.id);
+  const cartQty = items.find((i) => i.id === product.id)?.qty || 0;
 
   // Fires alongside the WhatsApp link opening — not awaited, so it never
   // delays or blocks the tab from opening (and avoids popup blockers).
@@ -94,6 +97,18 @@ export default function ProductCard({ product }) {
             >
               View Details
             </Link>
+            <button
+              onClick={() => addToCart(product, 1)}
+              aria-label="Add to cart"
+              className="relative w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center hover:scale-110 transition-transform"
+            >
+              <Plus size={16} />
+              {cartQty > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-secondary text-neutral-900 text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                  {cartQty}
+                </span>
+              )}
+            </button>
             <a
               href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildWhatsappOrderMessage(product, 1))}`}
               target="_blank"

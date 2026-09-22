@@ -1,7 +1,18 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
-import { useAuth } from './AuthContext.jsx';
-import { clearCartItems, getCart, removeCartItem, upsertCartItem } from '../supabase/queries.js';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import toast from "react-hot-toast";
+import { useAuth } from "./AuthContext.jsx";
+import {
+  clearCartItems,
+  getCart,
+  removeCartItem,
+  upsertCartItem,
+} from "../supabase/queries.js";
 
 const CartContext = createContext(null);
 
@@ -21,7 +32,7 @@ export function CartProvider({ children }) {
       const data = await getCart(user.id);
       setItems(data);
     } catch (err) {
-      console.error('Failed to load cart:', err);
+      console.error("Failed to load cart:", err);
     } finally {
       setLoading(false);
     }
@@ -34,7 +45,7 @@ export function CartProvider({ children }) {
 
   const addToCart = async (product, qty = 1) => {
     if (!user) {
-      toast.error('Please sign in to add items to your cart');
+      toast.error("Please sign in to add items to your cart");
       return;
     }
     const existing = items.find((i) => i.id === product.id);
@@ -44,41 +55,52 @@ export function CartProvider({ children }) {
     setItems((prev) =>
       existing
         ? prev.map((i) => (i.id === product.id ? { ...i, qty: newQty } : i))
-        : [...prev, { ...product, qty }]
+        : [...prev, { ...product, qty }],
     );
 
     try {
       await upsertCartItem(user.id, product.id, newQty);
-      toast.success(`${product.name} added to cart`);
-      setDrawerOpen(true);
+      toast.success(`${product.name} — ${newQty} in cart`, {
+        id: "add-to-cart",
+      });
     } catch (err) {
       refresh();
-      toast.error(err.message || 'Could not add to cart');
+      toast.error(err.message || "Could not add to cart");
     }
   };
 
   const removeFromCart = async (id) => {
     if (!user) return;
+    const itemName = items.find((i) => i.id === id)?.name;
     const prevItems = items;
     setItems((prev) => prev.filter((i) => i.id !== id));
     try {
       await removeCartItem(user.id, id);
+      if (itemName)
+        toast.success(`${itemName} removed from cart`, { id: "add-to-cart" });
     } catch (err) {
       setItems(prevItems);
-      toast.error(err.message || 'Could not remove item');
+      toast.error(err.message || "Could not remove item");
     }
   };
 
   const updateQty = async (id, qty) => {
     if (!user) return;
     const nextQty = Math.max(1, qty);
+    const itemName = items.find((i) => i.id === id)?.name;
     const prevItems = items;
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, qty: nextQty } : i)));
+    setItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, qty: nextQty } : i)),
+    );
     try {
       await upsertCartItem(user.id, id, nextQty);
+      if (itemName)
+        toast.success(`${itemName} — ${nextQty} in cart`, {
+          id: "add-to-cart",
+        });
     } catch (err) {
       setItems(prevItems);
-      toast.error(err.message || 'Could not update quantity');
+      toast.error(err.message || "Could not update quantity");
     }
   };
 
@@ -89,7 +111,7 @@ export function CartProvider({ children }) {
       if (user) await clearCartItems(user.id);
     } catch (err) {
       setItems(prevItems);
-      toast.error(err.message || 'Could not clear cart');
+      toast.error(err.message || "Could not clear cart");
     }
   };
 
@@ -99,8 +121,17 @@ export function CartProvider({ children }) {
   return (
     <CartContext.Provider
       value={{
-        items, loading, addToCart, removeFromCart, updateQty, clearCart, total, count,
-        drawerOpen, openDrawer: () => setDrawerOpen(true), closeDrawer: () => setDrawerOpen(false),
+        items,
+        loading,
+        addToCart,
+        removeFromCart,
+        updateQty,
+        clearCart,
+        total,
+        count,
+        drawerOpen,
+        openDrawer: () => setDrawerOpen(true),
+        closeDrawer: () => setDrawerOpen(false),
       }}
     >
       {children}
